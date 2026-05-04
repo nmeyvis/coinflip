@@ -78,7 +78,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     name: 'Rebel Coin',
     rarity: 'rare',
     families: ['pattern', 'adjacency'],
-    short: '70% to invert left neighbor.',
+    short: '70% to land opposite left neighbor.',
     long: '70% to land opposite the coin immediately to its left. In slot 1, behaves as Standard.',
     price: 5,
   },
