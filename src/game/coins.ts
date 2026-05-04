@@ -17,7 +17,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     families: ['match', 'streak'],
     short: '65% to repeat itself.',
     long: 'First flip in a run is 50/50. After that, 65% to repeat its own previous result.',
-    price: 3,
+    price: 2,
   },
   switch: {
     id: 'switch',
@@ -26,7 +26,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     families: ['pattern'],
     short: '65% to flip its own last result.',
     long: 'First flip in a run is 50/50. After that, 65% to land opposite of its own previous result.',
-    price: 3,
+    price: 2,
   },
   gold: {
     id: 'gold',
@@ -35,7 +35,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     families: ['greed'],
     short: 'On success: +0.2 streak.',
     long: '50/50 flip. If the challenge succeeds while this coin was used, gain +0.2 additional streak.',
-    price: 5,
+    price: 3,
   },
   cracked: {
     id: 'cracked',
@@ -44,7 +44,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     families: ['greed', 'risk'],
     short: '+0.4 on win, x0.5 reset on loss.',
     long: '50/50 flip. Success: +0.4 streak. Failure: streak resets to x0.5 instead of x1.0.',
-    price: 5,
+    price: 3,
   },
   crown: {
     id: 'crown',
@@ -53,7 +53,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     families: ['majority'],
     short: '60% Heads. Counts as 2H in Majority.',
     long: '60% Heads / 40% Tails. In Majority challenges, Heads counts as 2 Heads.',
-    price: 5,
+    price: 3,
   },
   anchor: {
     id: 'anchor',
@@ -62,7 +62,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     families: ['majority'],
     short: '60% Tails. Counts as 2T in Majority.',
     long: '40% Heads / 60% Tails. In Majority challenges, Tails counts as 2 Tails.',
-    price: 5,
+    price: 3,
   },
   echo: {
     id: 'echo',
@@ -71,7 +71,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     families: ['match', 'adjacency'],
     short: '70% to match left neighbor.',
     long: '70% to match the result of the coin immediately to its left. In slot 1, behaves as Standard.',
-    price: 8,
+    price: 5,
   },
   rebel: {
     id: 'rebel',
@@ -80,7 +80,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     families: ['pattern', 'adjacency'],
     short: '70% to invert left neighbor.',
     long: '70% to land opposite the coin immediately to its left. In slot 1, behaves as Standard.',
-    price: 8,
+    price: 5,
   },
   lucky: {
     id: 'lucky',
@@ -89,7 +89,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     families: ['prediction', 'majority'],
     short: '65% to land on declared side.',
     long: 'Declares a side based on the challenge target (Heads if no target). 65% to land on that side.',
-    price: 8,
+    price: 5,
   },
   safe: {
     id: 'safe',
@@ -98,7 +98,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     families: ['safety'],
     short: 'Failure halves streak instead of reset.',
     long: '50/50 flip. If challenge fails while this coin was used, streak is halved instead of fully reset.',
-    price: 12,
+    price: 8,
   },
 };
 
@@ -175,14 +175,14 @@ export function rarityRank(r: CoinDef['rarity']): number {
 export function priceFor(rarity: CoinDef['rarity']): number {
   switch (rarity) {
     case 'common':
-      return 3;
+      return 2;
     case 'uncommon':
-      return 5;
+      return 3;
     case 'rare':
-      return 8;
+      return 5;
     case 'epic':
-      return 12;
+      return 8;
     case 'legendary':
-      return 18;
+      return 12;
   }
 }

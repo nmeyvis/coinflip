@@ -92,9 +92,10 @@ export function GameScreen() {
   const showChallengePicker = state.phase === 'challenge_picker';
   const showRewardPicker = state.phase === 'reward_picker';
   const showShop = state.phase === 'shop';
+  const trayElevated = showChallengePicker || showShop;
 
   return (
-    <div className="game-screen">
+    <div className={`game-screen ${trayElevated ? 'tray-elevated' : ''}`}>
       <TopHud state={state} onNewRun={handleNewRun} />
       <ChallengeHeader
         state={state}
