@@ -97,19 +97,21 @@ export function GameScreen() {
   return (
     <div className={`game-screen ${trayElevated ? 'tray-elevated' : ''}`}>
       <TopHud state={state} onNewRun={handleNewRun} />
-      <ChallengeHeader
-        state={state}
-        onSetTarget={handleSetTarget}
-        onSetPrediction={handleSetPrediction}
-        ready={ready}
-      />
-      <Board
-        state={state}
-        onRemovePlaced={handleRemovePlaced}
-        onSlotClick={handleSlotClick}
-        postFlipMode={state.postFlipMode}
-        primaryButton={primary}
-      />
+      <div className="board-stack">
+        <ChallengeHeader
+          state={state}
+          onSetTarget={handleSetTarget}
+          onSetPrediction={handleSetPrediction}
+          ready={ready}
+        />
+        <Board
+          state={state}
+          onRemovePlaced={handleRemovePlaced}
+          onSlotClick={handleSlotClick}
+          postFlipMode={state.postFlipMode}
+          primaryButton={primary}
+        />
+      </div>
       <CoinTray
         state={state}
         onPlaceCoin={handlePlaceCoin}

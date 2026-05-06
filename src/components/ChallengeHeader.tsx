@@ -21,21 +21,9 @@ export function ChallengeHeader({ state, onSetTarget, onSetPrediction, ready }: 
 
   return (
     <section className={`challenge-header ${ready ? 'ready' : ''}`}>
-      <div className="challenge-row">
-        <div className="challenge-title">
-          <h2 className="challenge-name">{def.name}</h2>
-          <RarityBadge rarity={def.rarity} />
-        </div>
-        <div className="challenge-stats">
-          <span className="stat">
-            <span className="stat-label">Slots</span>
-            <span className="stat-value">{def.slots}</span>
-          </span>
-          <span className="stat slot-progress">
-            <span className="stat-label">Filled</span>
-            <span className="stat-value">{state.placed.length} / {def.slots}</span>
-          </span>
-        </div>
+      <div className="challenge-title">
+        <h2 className="challenge-name">{def.name}</h2>
+        <RarityBadge rarity={def.rarity} />
       </div>
       <p className="challenge-desc">{def.description}</p>
 

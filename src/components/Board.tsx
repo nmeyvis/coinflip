@@ -49,18 +49,17 @@ export function Board({
     );
   }
 
-  const showBanner =
-    (state.phase === 'resolved' || state.phase === 'game_over') && state.outcome != null;
   const showSplash = state.phase === 'resolved' && state.outcome?.success === true;
   const showGameOverBoard = state.phase === 'game_over';
-  const placingHint =
-    state.phase === 'placing' && state.placed.length === 0
-      ? 'Click coins from your bag to fill slots in order.'
-      : null;
+  const showOutcome =
+    (state.phase === 'resolved' || state.phase === 'game_over') && state.outcome != null;
+  const hintText = computeHint(state, postFlipMode);
 
   return (
     <section className="board-area">
-      {showBanner && <OutcomeBanner outcome={state.outcome!} round={state.round} />}
+      <div className="results-slot">
+        {showOutcome && <OutcomeBanner outcome={state.outcome!} round={state.round} />}
+      </div>
       <div
         className={`board ${state.phase} ${showSplash ? 'success' : ''} ${
           showGameOverBoard ? 'game-over' : ''
@@ -68,14 +67,7 @@ export function Board({
       >
         {showSplash && <SplashBurst key={`splash-${state.round}`} />}
         <div className="slot-row">{slotEls}</div>
-        {placingHint && <div className="board-hint">{placingHint}</div>}
-        {state.phase === 'post_flip' && (
-          <div className="board-hint">
-            {postFlipMode === 'convert' && 'Convert mode: click a coin to flip its result.'}
-            {postFlipMode === 'reroll' && 'Reroll mode: click a coin to reroll it.'}
-            {postFlipMode == null && 'Coins landed. Use a power-up or continue.'}
-          </div>
-        )}
+        <div className="board-hint">{hintText ?? ' '}</div>
       </div>
       <div className="primary-action">
         <button
@@ -88,6 +80,21 @@ export function Board({
       </div>
     </section>
   );
+}
+
+function computeHint(
+  state: GameState,
+  postFlipMode: 'convert' | 'reroll' | null,
+): string | null {
+  if (state.phase === 'placing' && state.placed.length === 0) {
+    return 'Click coins from your bag to fill slots in order.';
+  }
+  if (state.phase === 'post_flip') {
+    if (postFlipMode === 'convert') return 'Convert mode: click a coin to flip its result.';
+    if (postFlipMode === 'reroll') return 'Reroll mode: click a coin to reroll it.';
+    return 'Coins landed. Use a power-up or continue.';
+  }
+  return null;
 }
 
 interface SlotProps {
