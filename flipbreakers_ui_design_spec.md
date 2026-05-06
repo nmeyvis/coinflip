@@ -2,1506 +2,285 @@
 
 ## 1. UI Direction
 
-The game UI should feel like a **game board / arcade roguelite interface**, not a website or dashboard.
+The game UI should feel like a **game board / arcade roguelite interface**, not a website or dashboard. Every panel reads as a tactile object — coins are chips, slots are sockets, the board has weight. The flow is: pick → place → flip → resolve → reward (or game over).
 
-The player should feel like they are manipulating physical game pieces:
-
-- Coins are **tokens**
-- Power-ups are **inventory items**
-- Challenges are **cards/contracts**
-- The board is the **main play surface**
-- Shops and challenge selection are **modal game screens**, not pages
-- Primary actions should be big, tactile, and minimal
-
-Avoid:
-
-- Too many buttons
-- Website-style cards with equal-weight CTAs
-- Navigation bars
-- Form-like layouts
-- Dense text blocks
-- Tables during active gameplay
-- Multiple competing action buttons
-
-The main round screen should have one obvious flow:
-
-> Choose challenge → place coins → start flip → watch result → see success/failure → continue.
+The single most important rhythm: **a failed challenge ends the run** and presents the player with a Game Over dialog. There is no streak meter to defend, no protection chain. The player either succeeds and moves on, or fails and starts over.
 
 ---
 
 ## 2. Main Screen Layout
 
 ### 2.1 Screen Regions
+Top-to-bottom, single column on desktop:
 
-The main gameplay screen has four major regions:
-
-```text
-┌──────────────────────────────────────────────┐
-│                  Top HUD                     │
-├──────────────────────────────────────────────┤
-│           Challenge Header Panel             │
-├──────────────────────────────────────────────┤
-│                                              │
-│                  Board                       │
-│                                              │
-├──────────────────────────────────────────────┤
-│              Bottom Inventory Tray           │
-│       Coin Bag                  Power-Ups    │
-└──────────────────────────────────────────────┘
-```
-
-The **board** is the visual center of the game.
-
-The **bottom tray** is the player’s toolbelt.
-
-The **challenge header** tells the player what they are trying to do.
-
-The **top HUD** shows run-level state.
+1. **Top HUD** — round, shards, "next shop" pip indicator, restart button.
+2. **Challenge Header** — active challenge name, family, description, target/prediction picker if applicable.
+3. **Board** — slot row, optional banner (success only), splash burst (success), Primary action button.
+4. **Bottom Tray** — Coin Bag column + Power-Ups column.
+5. **Modals** (overlay): Challenge Picker, Power-Up Reward, Coin Shop, Game Over.
 
 ---
 
 ## 3. Top HUD
 
-The top HUD should be compact and persistent.
+### 3.1 Cells
+Three info cells + a restart button:
+- **Round** — current round number.
+- **Shards** — current shard balance (◆ icon + integer).
+- **Next Shop** — three pips, lit as you progress through the current 3-round cycle.
+- **Restart** — circular ⟲ button. Confirms before discarding the run.
 
-### 3.1 Required HUD Items
-
-| Item | Purpose |
-|---|---|
-| **Round** | Shows current round number |
-| **Streak Multiplier** | Shows current multiplier, visually emphasized |
-| **Shards** | Shows current shop currency |
-| **Run Progress** | Shows progression toward next shop / boss / end |
-
-Example:
-
-```text
-Round 4        Streak x2.6        Shards 46        Run Progress ● ● ● ○ ○
-```
-
-### 3.2 Visual Style
-
-The HUD should feel like a game overlay:
-
-- Dark background panel
-- Metallic / stone / arcade frame
-- Large multiplier text
-- Shard icon next to currency
-- Progress pips or nodes, not a progress bar that feels like a website loading bar
-
-### 3.3 Interaction
-
-The HUD should mostly be non-interactive.
-
-Avoid making every HUD item clickable.
+### 3.2 Visual
+Dark panel with subtle inner shadow; cells separated visually by spacing rather than dividers. Numbers use tabular-nums.
 
 ---
 
-## 4. Challenge Header Panel
+## 4. Challenge Header
 
-The challenge header sits **above the board**.
-
-It tells the player:
-
-- Challenge name
-- Rarity
-- Description
-- Required slots
-- Streak multiplier gain
-- Selected target, if applicable
-
-Example:
-
-```text
-Royal Majority        Rare
-
-Choose Heads or Tails.
-Get at least 4 of your chosen side in 5 slots.
-
-Slots: 5      Streak Gain: +1.3
-Target: Heads
-```
-
-### 4.1 Header Requirements
-
-The header should be readable at a glance.
-
-It should include:
-
-| Element | Example |
-|---|---|
-| Challenge name | Royal Majority |
-| Rarity badge | Rare |
-| Description | Get at least 4 Heads in 5 slots |
-| Slot count | 5 slots |
-| Streak gain | +1.3 |
-| Target selector | Heads / Tails, only when needed |
+### 4.1 Required Fields
+- Challenge name + rarity badge.
+- Family tags (e.g. "majority").
+- Description text.
+- Slot count + Filled count (e.g. "Filled 3 / 5").
 
 ### 4.2 Target Selection
+For Majority-style challenges: two buttons (Heads / Tails) toggle the target. Selected button shows the corresponding face.
 
-Some challenges require the player to choose Heads or Tails.
-
-Examples:
-
-- Simple Majority
-- Strong Majority
-- Royal Majority
-- Dominion
-- Lucky Coin / Fate Coin interactions
-
-For those challenges, the target selector should be prominent but not website-like.
-
-Good:
-
-```text
-Choose Target:
-[ HEADS ]   [ TAILS ]
-```
-
-Better game feel:
-
-- Two large coin-face toggles
-- Selected side glows
-- The selected side is reflected in the board outline color or challenge header
-
-Avoid:
-
-- Small radio buttons
-- Dropdowns
-- Form labels
+### 4.3 Prediction Selection
+For Prediction-style challenges: one toggle button per slot, each cycling H ↔ T.
 
 ---
 
 ## 5. Board
 
-The board is the center of the screen and the most important visual area.
+### 5.1 Slot Row
+N empty sockets matching `challenge.slots`. Each socket displays its index. Empty sockets show a dashed border and an `◯` placeholder.
 
-### 5.1 Board States
+### 5.2 States
+- **Empty** — dashed border, dim text.
+- **Placed** — coin glyph + name; clickable to remove during placing.
+- **Flipping** — spinning `?` face during reveal.
+- **Landed Heads/Tails** — the face shows `H` or `T`.
+- **Modified** — a coin altered by Convert/Reroll has a subtle outer ring.
 
-The board has several states:
+### 5.3 Crown / Anchor Multiplier Badge
+When the active challenge is a Majority challenge **and** the slot landed in a way that triggers the doubled count (Crown landed Heads, or Anchor landed Tails), the slot face shows a small `×2` badge in its top-right. This communicates the otherwise-invisible weighting that decides the outcome.
 
-1. **Empty**
-2. **Partially filled**
-3. **Ready**
-4. **Flipping**
-5. **Resolved success**
-6. **Resolved failure**
+### 5.4 Success Splash
+On entering `resolved` with a successful outcome, a particle burst emits from both vertical midpoints of the board. Particles are emerald and gold, fan out in a cone, fade in 0.18s and out by 1.2s. Suppressed under `prefers-reduced-motion`.
 
-### 5.2 Empty State
+### 5.5 Outcome Banner
+Only shown on success. Sits above the board. No frame or background of its own — the board itself takes the green border + emerald glow when a success is showing. The banner contents:
+- Title: **SUCCESS**
+- Reason text (e.g. "4/4 Heads")
+- Reward chip: `+N ◆`
 
-At the start of each challenge, the board shows empty numbered slots.
+### 5.6 Primary Action Button
+Below the board. Label / behavior changes by phase:
 
-Example:
-
-```text
-[ 1 ] [ 2 ] [ 3 ] [ 4 ] [ 5 ]
-```
-
-Each slot should look like a physical socket or pedestal.
-
-Empty slots should be visually obvious:
-
-- Glowing outline
-- Slot number
-- Empty coin silhouette
-- Subtle pulsing if the board is waiting for input
-
-Instruction text:
-
-```text
-Select coins from your bag to fill slots in order.
-```
-
-### 5.3 Coin Placement
-
-The player places coins by clicking coins in the Coin Bag.
-
-Rule:
-
-> Clicking a coin in the Coin Bag places it into the next empty board slot.
-
-Example flow:
-
-```text
-Board starts:
-[ Empty ] [ Empty ] [ Empty ]
-
-Player clicks Heavy Coin:
-[ Heavy ] [ Empty ] [ Empty ]
-
-Player clicks Crown Coin:
-[ Heavy ] [ Crown ] [ Empty ]
-
-Player clicks Standard Coin:
-[ Heavy ] [ Crown ] [ Standard ]
-```
-
-The player does **not** need to click the board slot first.
-
-This keeps the interaction fast and game-like.
-
-### 5.4 Placement Order
-
-Coins are placed in the order clicked.
-
-Board slots are filled from left to right.
-
-```text
-First clicked coin → Slot 1
-Second clicked coin → Slot 2
-Third clicked coin → Slot 3
-```
-
-This matters because coins flip left to right and some coin effects care about the coin to their left.
-
-### 5.5 Removing Coins From Board
-
-The player needs a way to undo placement, but this should not create button clutter.
-
-Recommended interactions:
-
-| Action | Behavior |
-|---|---|
-| Click placed coin | Remove it from the board |
-| Right-click placed coin | Remove it from the board |
-| Drag placed coin back to tray | Optional advanced interaction |
-| Press Backspace | Remove most recently placed coin |
-
-Best default:
-
-> Clicking a placed coin removes it and shifts later placed coins left.
-
-Example:
-
-```text
-Before:
-[ Heavy ] [ Crown ] [ Gold ] [ Empty ]
-
-Player clicks Crown.
-
-After:
-[ Heavy ] [ Gold ] [ Empty ] [ Empty ]
-```
-
-This keeps ordering simple.
-
-### 5.6 Ready State
-
-When all required slots are filled, the Start button becomes active.
-
-Before ready:
-
-```text
-Start button disabled / dimmed
-Text: Fill all slots
-```
-
-After ready:
-
-```text
-Start button active / glowing
-Text: Start
-```
-
-The board should visually communicate readiness:
-
-- Slot frames glow
-- Board outline brightens
-- Start button pulses subtly
-- Challenge header confirms readiness
-
-Example:
-
-```text
-5 / 5 slots filled
-Ready to flip
-```
-
----
-
-## 6. Start Button
-
-There should be **one primary button** during the board phase.
-
-```text
-START
-```
-
-### 6.1 Location
-
-The Start button should be near the board, ideally:
-
-- Right side of the board
-- Below the board
-- Integrated into the board frame
-
-Avoid putting it in the bottom tray, because the tray is for inventory.
-
-### 6.2 States
-
-| State | Label | Behavior |
+| Phase | Label | Behavior |
 |---|---|---|
-| Not ready | Fill Slots | Disabled |
-| Ready | Start | Begins coin flipping |
-| Flipping | Flipping… | Disabled |
-| Resolved | Continue | Advances after success/failure presentation |
+| `challenge_picker` | "Choose a Challenge" | disabled |
+| `placing` (slots empty) | "Fill Slots (X / Y)" | disabled |
+| `placing` (needs target/pred) | "Choose Target" / "Set up challenge" | disabled |
+| `placing` (ready) | "Start" | pulses; commits and starts flipping |
+| `flipping` | "Flipping…" | disabled |
+| `post_flip` | "Resolve" | pulses; computes outcome |
+| `resolved` (success) | "Continue" | pulses; advances to reward picker |
 
-You can either reuse the same button location or show a separate Continue prompt after resolution.
-
-For a game feel, reusing the same large action button is clean:
-
-```text
-Fill Slots → Start → Flipping… → Continue
-```
+Pulsing buttons use a gold-glow border animation (`pulse-glow`).
 
 ---
 
-## 7. Coin Flipping Animation
+## 6. Coin Tray
 
-After clicking Start, coins flip one at a time from left to right.
+### 6.1 Coin Bag Column
+- Always shows the Standard Coin chip first (count = ∞).
+- Then one chip per owned special coin id, ordered by canonical coin order.
+- Each chip displays: rarity color border, coin glyph, coin name, short description, and a count.
+- A **★ recommended badge** appears when the coin's families overlap the active challenge's families.
+- An **invalid** state dims the chip if the coin cannot be placed (none currently in this prototype).
+- Heavy / Switch chips display a **memory badge** in the bottom-right of the glyph: `?` (panel), `H` (gold), `T` (silver) reflecting the per-id memory. Other coins display nothing.
 
-### 7.1 Flip Timing
+### 6.2 Power-Ups Column
+Three slots side-by-side. Each slot:
+- **Empty** — `⬡` socket glyph + "Empty".
+- **Filled** — power icon + name + kind/charges. Highlights when usable in the current phase. Active mode (Convert / Reroll selected) gets a stronger highlight.
 
-Recommended timing:
-
-```text
-Slot 1 flips immediately.
-Slot 2 flips after 250–350ms.
-Slot 3 flips after 250–350ms.
-Slot 4 flips after 250–350ms.
-Slot 5 flips after 250–350ms.
-```
-
-The delay should be long enough to create tension, but short enough to avoid feeling slow.
-
-Recommended default:
-
-```text
-300ms delay between coin flips
-500ms final result pause before success/failure banner
-```
-
-### 7.2 Per-Coin Flip States
-
-Each coin slot can have these visual states:
-
-| State | Visual |
-|---|---|
-| Waiting | Dimmed coin |
-| Flipping | Spinning / glow / blur |
-| Landed Heads | Heads face with bright impact |
-| Landed Tails | Tails face with bright impact |
-| Modified | Special outline if affected by coin or power-up |
-| Counted | Small badge showing contribution |
-
-Example for Crown Coin:
-
-```text
-Crown Coin lands Heads.
-Badge appears: +2 Heads
-```
-
-Example for Gold Coin:
-
-```text
-Gold Coin lands Tails.
-No success bonus badge yet.
-```
+### 6.3 Power Icons
+- `⇋` Coin Convert
+- `↻` Reroll Charm
+- `☘` Lucky Charm
+- `⛨` Shield
 
 ---
 
-## 8. Outcome Display
+## 7. Flow Details
 
-The success or failure result must be impossible to miss.
+### 7.1 Placing
+- Click a coin in the bag → it appears in the next empty slot.
+- Click a placed coin → it returns to the bag.
+- Backspace removes the most recently placed coin.
 
-### 8.1 Success State
+### 7.2 Flipping
+- After Start: each slot reveals a result every 320 ms in slot order.
+- After the last reveal there's a 520 ms hold, then phase becomes `post_flip`.
 
-Success should feel rewarding.
+### 7.3 Post-Flip
+- The board hint reads "Coins landed. Use a power-up or continue."
+- Clicking Coin Convert enters Convert Mode → board hint changes; clicking a coin toggles its result and consumes the power.
+- Clicking Reroll Charm enters Reroll Mode → clicking a coin re-runs `flipCoin` (with current neighbors), spends a charge, marks the coin modified.
+- Pressing Resolve evaluates the challenge.
 
-Display:
+### 7.4 Resolved (Success Only)
+- Outcome banner + splash burst + green-bordered board.
+- Continue button advances to Reward Picker.
 
-```text
-SUCCESS
-4 Heads — Challenge Cleared
-Streak +1.3
-New Streak x4.8
-+3 Shards
-```
+### 7.5 Shielded Failure
+If the player has a Shield equipped when a challenge fails, the Shield is automatically consumed and phase enters `resolved` with a `shielded` outcome instead of `game_over`. The board shows a **SHIELDED** banner in azure tones (no green border, no splash) explaining the save. Continue advances to the next round (with shop check) — no shards, no reward.
 
-Visual treatment:
-
-- Bright green / gold glow
-- Board outline pulses
-- Coins shimmer
-- Sound cue
-- Streak multiplier animates upward
-- Shards fly toward HUD
-
-### 8.2 Failure State
-
-Failure should feel clear, but not overly punishing visually.
-
-Display:
-
-```text
-FAILED
-Only 3 Heads — Needed 4
-Streak Reset to x1.0
-```
-
-If protected:
-
-```text
-FAILED
-Only 3 Heads — Needed 4
-Streak Guard prevented reset
-```
-
-Visual treatment:
-
-- Red / orange / dark smoke
-- Board outline cracks or dims
-- Failed requirement is highlighted
-- If a shield saves the player, show shield animation prominently
-
-### 8.3 Outcome Banner Location
-
-The outcome banner should appear directly above or over the board.
-
-Do not hide it in a toast.
-
-Good:
-
-```text
-          SUCCESS
-  4 Heads — Challenge Cleared
-
-[ Coin ] [ Coin ] [ Coin ] [ Coin ] [ Coin ]
-```
-
-Bad:
-
-```text
-Small notification in corner: success
-```
-
-The board is the event, so the result belongs on the board.
+### 7.6 Game Over (Failure with no Shield)
+Game over is rendered **inline on the board**, mirroring the success flow — no modal. The final coin layout stays visible so the player can see why they lost.
+- Banner above the board: **GAME OVER** title (crimson) + reason ("`<eval reason>` — You reached round X.").
+- Board frame takes a crimson border + glow (analogue of the green success border).
+- The primary action button below the board changes to **Play Again** (pulsing, dispatches `NEW_RUN`). It occupies the same slot as Continue does on success.
+- The bottom tray (coin bag, power-ups) remains visible.
 
 ---
 
-## 9. Bottom Inventory Tray
+## 8. Challenge Picker Modal
 
-The bottom tray is persistent during main gameplay.
-
-It has two columns:
-
-```text
-┌──────────────────────────────────────────────┐
-│ Coin Bag                         Power-Ups   │
-│ [Coins...]                       [3 slots]   │
-└──────────────────────────────────────────────┘
-```
-
-The tray should feel like a physical inventory tray, not a website panel.
+- Backdrop dims and blurs the board.
+- Title: "Choose a Challenge".
+- Three challenge cards in a row. Each card:
+  - Header: name + rarity badge.
+  - Family line.
+  - Description.
+  - Stats: slot count.
+  - Optional warning: "Rerolls disabled" (Last Stand).
+- Click a card to commit. No Skip option — choosing is mandatory.
 
 ---
 
-## 10. Coin Bag Column
+## 9. Power-Up Reward Modal
 
-The left side of the tray is the Coin Bag.
-
-### 10.1 Coin Bag Contents
-
-The Coin Bag shows:
-
-- Special coins owned
-- Standard Coin source
-- Counts for duplicates, if applicable
-- Disabled state for invalid coins
-- Recommended glow for strong coins
-
-Example:
-
-```text
-Coin Bag
-
-[ Standard x∞ ] [ Heavy x1 ] [ Crown x1 ] [ Gold x1 ] [ Echo x1 ]
-```
-
-### 10.2 Standard Coin
-
-Standard Coin should always be visible and always usable.
-
-Recommended visual:
-
-```text
-Standard Coin ∞
-```
-
-or
-
-```text
-Standard Coin
-Unlimited
-```
-
-It should not look like a limited inventory item.
-
-### 10.3 Coin Card / Token Design
-
-Each coin in the tray should show:
-
-| Element | Example |
-|---|---|
-| Coin icon | Crown symbol |
-| Name | Crown Coin |
-| Count | x2 or ∞ |
-| Rarity frame | Common / Rare / Epic |
-| Validity state | Normal, recommended, invalid |
-| Short effect on hover/inspect | Counts as 2 Heads in Majority |
-
-Keep the default card compact.
-
-Long explanations should appear only on hover, focus, or inspection.
-
-### 10.4 Clicking Coins
-
-Clicking a valid coin:
-
-```text
-Places that coin into the next empty board slot.
-```
-
-If the coin has multiple copies:
-
-```text
-Count decreases visually until coins are removed or challenge resolves.
-```
-
-If Standard Coin is clicked:
-
-```text
-Places a Standard Coin.
-No count reduction, because it is unlimited.
-```
-
-### 10.5 Invalid Coins
-
-Invalid coins should remain visible but disabled.
-
-Example disabled tooltip:
-
-```text
-Requires a declared Heads/Tails target.
-```
-
-or:
-
-```text
-Requires a mirrored slot challenge.
-```
-
-Do not hide invalid coins, because that makes the inventory feel inconsistent.
+- Title: "Choose a Power-Up" (or "Replace which slot?" in replace mode).
+- Three offered power-up cards. Click to take.
+- If all 3 power-up slots are full when a card is chosen, the modal switches to replace mode: shows the incoming card up top and the player's three current slots (or empty) as targets.
+- Footer: **Skip Reward** (or **Cancel** in replace mode).
 
 ---
 
-## 11. Power-Ups Column
+## 10. Coin Shop Modal
 
-The right side of the bottom tray contains exactly **3 power-up slots**.
-
-```text
-Power-Ups
-
-[ Shield ] [ Coin Convert ] [ Heads Specialist ]
-```
-
-### 11.1 Power-Up Slot Design
-
-Each slot should look like an equipped item slot.
-
-Each power-up shows:
-
-| Element | Example |
-|---|---|
-| Icon | Shield |
-| Name | Shield |
-| Type | Consumable / Passive / Charged |
-| Charges | 2, if relevant |
-| Rarity border | Rare, Epic, etc. |
-| Usable state | Glowing if usable now |
-
-### 11.2 Power-Up States
-
-| State | Visual |
-|---|---|
-| Passive active | Constant subtle glow |
-| Usable now | Strong glow / pulse |
-| Not usable now | Dimmed |
-| Empty slot | Empty socket |
-| Consumed | Break animation, then empty |
-
-### 11.3 Power-Up Usage
-
-Power-ups should not all be buttons all the time.
-
-Only show a strong clickable state when the power-up is relevant.
-
-Example:
-
-- Coin Convert glows after coins land and before resolution is finalized
-- Shield glows when a failure is about to break streak
-- Heads Specialist may be passive and never clickable
-
-This avoids “too many buttons.”
+- Title: "Coin Shop", with current shard balance in the header.
+- Three coin offers. Each card shows: name + rarity badge, glyph, short description, price (`N ◆`).
+- Disabled states: insufficient shards, at max duplicates. Bag-full triggers a replace prompt instead of disabling.
+- Footer: **Continue** to leave the shop without buying.
 
 ---
 
-## 12. Main Gameplay Interaction Flow
+## 11. Visual Language
 
-### 12.1 Pre-Flip Flow
+### 11.1 Materials
+- Surface palette: deep navy panels (`--bg`, `--panel`, `--panel-2`).
+- Frame color `--frame` for borders; subtle inset highlight on raised surfaces.
+- Outcome-success accent: `--emerald`. Failure / game-over accent: `--crimson`.
 
-```text
-1. Challenge appears.
-2. Board shows empty slots.
-3. Player clicks coins in Coin Bag.
-4. Coins fill slots left to right.
-5. Player may click placed coins to remove/reorder by replacement.
-6. Once all slots are filled, Start activates.
-7. Player clicks Start.
-```
+### 11.2 Coin Faces
+- Heads: warm gold gradient.
+- Tails: cool silver gradient.
+- Both faces share the same circular socket size.
 
-### 12.2 Flip Flow
+### 11.3 Rarity Colors
+- common — slate gray
+- uncommon — green
+- rare — blue
+- epic — violet
+- legendary — gold
 
-```text
-1. Start button changes to Flipping…
-2. Slot 1 flips.
-3. Short delay.
-4. Slot 2 flips.
-5. Short delay.
-6. Continue until all slots resolve.
-7. Coin effects apply.
-8. Power-up window opens if relevant.
-9. Challenge success/failure resolves.
-```
-
-### 12.3 Post-Flip Flow
-
-On success:
-
-```text
-1. Success banner appears.
-2. Multiplier gain animates.
-3. Shards animate to HUD.
-4. Continue button appears.
-5. Power-up reward popup opens.
-```
-
-On failure:
-
-```text
-1. Failure banner appears.
-2. Failure reason is shown.
-3. Streak penalty animates.
-4. Protective powers trigger if available.
-5. Continue button appears.
-```
+### 11.4 Coin Tints (glyph color in the bag)
+- Heavy: warm tan
+- Switch: cool blue
+- Crown: bright gold
+- Anchor: deep blue
+- Echo: lavender
+- Rebel: pink
+- Lucky: mint
 
 ---
 
-## 13. Challenge Picker Popup
+## 12. Buttons
 
-The challenge picker is a modal popup over a dimmed gameplay screen.
+### 12.1 Primary
+Pill-shaped, raised, gold border when in pulse state. The single primary action sits below the board and is the player's main next-step affordance.
 
-It should not feel like a webpage section.
+### 12.2 Ghost
+Used for Skip / Cancel buttons in modal footers. Transparent background, frame border on hover.
 
-### 13.1 Layout
-
-The popup has three columns.
-
-```text
-┌──────────────────────────────────────────────┐
-│              Choose a Challenge              │
-├──────────────┬──────────────┬───────────────┤
-│ Challenge 1  │ Challenge 2  │ Challenge 3   │
-└──────────────┴──────────────┴───────────────┘
-```
-
-### 13.2 Challenge Card Contents
-
-Each challenge card should show:
-
-| Element | Example |
-|---|---|
-| Name | Royal Majority |
-| Rarity | Rare |
-| Family icon | Majority |
-| Short requirement | Get 4 of chosen side in 5 slots |
-| Required slots | 5 |
-| Streak gain | +1.3 |
-| Special rules | Rerolls disabled, if relevant |
-
-Example card:
-
-```text
-Royal Majority
-Rare
-
-Choose Heads or Tails.
-Get at least 4 of your chosen side in 5 slots.
-
-Slots: 5
-Streak Gain: +1.3
-```
-
-### 13.3 Card Interaction
-
-The whole card should be clickable.
-
-Avoid adding multiple buttons inside each card.
-
-Recommended:
-
-```text
-Click card to choose.
-Selected card expands or glows.
-Confirm automatically after short delay, or show one large Confirm button.
-```
-
-Best low-click version:
-
-> Clicking a challenge card immediately selects it and closes the popup.
-
-This keeps the game fast.
-
-If you want to avoid accidental clicks:
-
-> First click selects, second click confirms, or one large Confirm button appears below the three cards.
-
-But avoid individual “Choose” buttons on all three cards if the whole card can already be clicked.
+### 12.3 Avoid
+- Tiny secondary buttons floating in the playfield.
+- Any state where two equally-styled buttons compete for attention. The primary button changes label by phase rather than splitting into multiple buttons.
 
 ---
 
-## 14. Power-Up Reward Popup
+## 13. Accessibility
 
-After successful challenges, show a reward popup with 3 power-up choices.
-
-### 14.1 Layout
-
-```text
-┌──────────────────────────────────────────────┐
-│              Choose a Power-Up               │
-├──────────────┬──────────────┬───────────────┤
-│ Power 1      │ Power 2      │ Power 3       │
-└──────────────┴──────────────┴───────────────┘
-```
-
-### 14.2 Interaction
-
-The whole power-up card is clickable.
-
-If the player has an empty slot:
-
-```text
-Clicking a power-up equips it immediately.
-```
-
-If all 3 slots are full:
-
-```text
-Clicking a power-up enters Replace Mode.
-The bottom tray highlights the 3 equipped power-ups.
-Player clicks which one to replace.
-```
-
-### 14.3 Replace Mode
-
-Replace Mode should feel like a game inventory swap, not a confirmation form.
-
-Example:
-
-```text
-Choose a slot to replace:
-[ Shield ] [ Coin Convert ] [ Heads Specialist ]
-```
-
-The selected new power-up remains shown above.
-
-There should be one small cancel/back option, but not many buttons.
+- Color is never the only signal — every state also uses text or shape changes (badge text, dashed vs solid border, glyph swap).
+- All interactive elements are real `<button>`s with titles for hover info.
+- `prefers-reduced-motion` disables the success splash burst and minimizes pulse animations.
 
 ---
 
-## 15. Coin Shop Popup
+## 14. Keyboard
 
-The coin shop appears every 3 rounds.
-
-It is a modal popup over a dimmed gameplay screen.
-
-### 15.1 Shop Layout
-
-```text
-┌──────────────────────────────────────────────┐
-│                 Coin Shop                    │
-│                 Shards: 46                   │
-├───────────┬───────────┬───────────┬─────────┤
-│ Coin 1    │ Coin 2    │ Coin 3    │ Coin 4  │
-└───────────┴───────────┴───────────┴─────────┘
-│                 Continue                     │
-└──────────────────────────────────────────────┘
-```
-
-Even though the game spec says 3 shop coins, the UI can support 3 or 4. For simplicity and consistency, use **3 shop coin cards** in the first version.
-
-### 15.2 Shop Card Contents
-
-Each shop coin card shows:
-
-| Element | Example |
-|---|---|
-| Coin name | Crown Coin |
-| Rarity | Uncommon |
-| Coin icon | Crown symbol |
-| Short effect | Counts Heads as 2 in Majority |
-| Price | 5 Shards |
-| Buy affordance | Buy button or click card |
-
-### 15.3 Shop Interaction
-
-To reduce button clutter:
-
-Preferred:
-
-> Clicking the coin card buys it if affordable.
-
-The Buy button can exist visually, but the whole card should behave as the click target.
-
-If the player cannot afford the coin:
-
-- Card is dimmed
-- Price is red or muted
-- Tooltip says “Need 3 more Shards”
-
-### 15.4 Buying With Full Coin Bag
-
-If the special coin bag is full:
-
-```text
-Click coin to buy.
-Inventory replacement overlay appears.
-Player chooses which special coin to replace.
-```
-
-Standard Coins are not part of replacement because they are unlimited and not in the special coin bag.
-
-### 15.5 Continue Button
-
-The shop should have one obvious exit button:
-
-```text
-Continue
-```
-
-Avoid:
-
-- Close icon
-- Back button
-- Skip button
-- Continue button
-- Confirm button
-
-Use only one exit affordance unless absolutely necessary.
+- **Enter** — fires the primary action when enabled.
+- **Backspace** — removes the most recently placed coin during `placing`.
+- **Escape** — exits Convert/Reroll mode if active.
 
 ---
 
-## 16. Visual Language
-
-### 16.1 Overall Feel
-
-The UI should feel like:
-
-- Arcade cabinet
-- Roguelite board game
-- Fantasy gambling machine
-- Physical tokens and sockets
-- Dramatic challenge contracts
-
-It should not feel like:
-
-- SaaS dashboard
-- Landing page
-- Pricing table
-- Mobile banking app
-- Form wizard
-
-### 16.2 Materials
-
-Use game-like material cues:
-
-| Component | Suggested Material |
-|---|---|
-| Board | Stone, metal, dark glass, glowing channels |
-| Coins | Metal tokens, embossed icons |
-| Power-ups | Gemmed cards, relic slots, item icons |
-| Challenge cards | Contract plaques, framed cards |
-| Shop cards | Loot cards / merchant wares |
-| HUD | Dark metal frame |
-
-### 16.3 Rarity Colors
-
-Suggested rarity palette:
-
-| Rarity | Color Direction |
-|---|---|
-| Common | Steel / white |
-| Uncommon | Green |
-| Rare | Blue |
-| Epic | Purple |
-| Legendary | Gold / orange |
-
-Use rarity color mostly in borders, glows, and badges.
-
-Do not flood entire cards with saturated colors.
-
----
-
-## 17. Button Philosophy
-
-The game should minimize explicit buttons.
-
-### 17.1 Primary Buttons
-
-During main gameplay, only one primary button should be visible:
-
-```text
-Start / Continue
-```
-
-### 17.2 Clickable Objects
-
-Most interactions should happen by clicking game objects:
-
-| Object | Interaction |
-|---|---|
-| Coin in bag | Place into next board slot |
-| Coin on board | Remove from board |
-| Challenge card | Choose challenge |
-| Power-up card | Equip / use / replace |
-| Shop coin card | Buy coin |
-| Power-up slot | Replace or inspect |
-
-This feels more game-like than surrounding everything with buttons.
-
-### 17.3 Avoid
-
-Avoid UI like:
-
-```text
-[Select] [Details] [Confirm] [Cancel] [Back] [Next] [Skip] [Info]
-```
-
-Instead:
-
-- Click object to act
-- Hover/focus to inspect
-- One primary button for major flow advance
-
----
-
-## 18. Information Density
-
-Keep active gameplay text short.
-
-### 18.1 Main Challenge Text
-
-Good:
-
-```text
-Get at least 4 Heads in 5 slots.
-```
-
-Bad:
-
-```text
-In this challenge, you must select a target side, then attempt to get at least four matching outcomes from the selected side across five total coin flips.
-```
-
-### 18.2 Details on Hover
-
-Coin and power-up details can be shown in an inspection panel or tooltip.
-
-Example:
-
-Hover Crown Coin:
-
-```text
-Crown Coin
-Uncommon
-
-60% Heads / 40% Tails.
-In Majority challenges, Heads counts as 2.
-```
-
-Do not show all of this permanently in the bottom tray.
-
----
-
-## 19. Accessibility and Readability
-
-Even though the UI should feel game-like, it must remain readable.
-
-### 19.1 Requirements
-
-- Large text for challenge name and outcome
-- Clear slot numbers
-- Clear Heads/Tails icons
-- Color is not the only indicator
-- Rarity uses color + label
-- Success/failure uses text + animation + color
-- Disabled coins explain why they are disabled
-- Keyboard support for coin placement
-
-### 19.2 Keyboard Controls
-
-Suggested controls:
-
-| Key | Action |
-|---|---|
-| 1–9 | Select coin from bag |
-| Enter | Start / Continue |
-| Backspace | Remove last placed coin |
-| Esc | Close popup / cancel replace mode |
-| Arrow keys | Navigate cards |
-| Space | Confirm selected card |
-
----
-
-## 20. Animation Guidelines
-
-Animations should create tension and clarity, not slow the player down.
-
-### 20.1 Recommended Durations
+## 15. Animation Cheat Sheet
 
 | Animation | Duration |
-|---|---:|
-| Coin placement | 100–150ms |
-| Coin flip | 250–350ms |
-| Delay between flips | 250–350ms |
-| Result banner entrance | 250ms |
-| Multiplier count-up | 400–700ms |
-| Shard gain animation | 400–600ms |
-| Popup entrance | 150–250ms |
-
-### 20.2 Skip / Speed-Up
-
-After the player understands the game, repeated animations may feel slow.
-
-Recommended:
-
-- Clicking during flip sequence speeds up remaining flips
-- Holding Space fast-forwards animations
-- Settings can enable “Fast Animations”
-
-Do not remove animations entirely by default because they are central to the game feel.
+|---|---|
+| Coin reveal step | 320 ms |
+| Final pause before post-flip | 520 ms |
+| Banner fade-in | 250 ms |
+| Modal fade-in | 200 ms |
+| Pulse glow loop | 1.6 s |
+| Splash burst | 0.65–1.2 s per particle |
 
 ---
 
-## 21. Screen State Details
+## 16. Component Inventory
 
-### 21.1 Main Round — Empty Board
-
-Visible:
-
-- Top HUD
-- Challenge header
-- Empty board slots
-- Bottom tray
-- Disabled Start button
-
-Primary instruction:
-
-```text
-Select coins from the bag to fill the board in order.
-```
-
-### 21.2 Main Round — Partially Filled
-
-Visible:
-
-- Filled slots show placed coins
-- Empty slots remain obvious
-- Coin bag counts update
-- Start button remains disabled
-
-Instruction:
-
-```text
-3 / 5 slots filled
-```
-
-### 21.3 Main Round — Ready
-
-Visible:
-
-- All slots filled
-- Start button active
-- Board outline glows
-
-Instruction:
-
-```text
-Ready to flip.
-```
-
-### 21.4 Main Round — Flipping
-
-Visible:
-
-- Start button becomes disabled
-- Coins flip left to right
-- Active slot glows
-- Future slots are dimmed
-- Completed slots show final result
-
-Instruction:
-
-```text
-Resolving slot 3 of 5...
-```
-
-### 21.5 Main Round — Power-Up Window
-
-If a power-up can affect the outcome, pause briefly after flips.
-
-Example:
-
-```text
-You are 1 Head short.
-Use Coin Convert?
-```
-
-But do not create a website-like dialog with many buttons.
-
-Better:
-
-- Coin Convert power-up glows
-- Failing coin pulses
-- Player clicks the power-up, then clicks the coin to convert
-- Or clicks Continue to accept failure
-
-### 21.6 Main Round — Success
-
-Visible:
-
-- Success banner
-- Requirement summary
-- Multiplier gain
-- Shard gain
-- Continue button
-
-Example:
-
-```text
-SUCCESS
-4 Heads — Challenge Cleared
-
-+1.3 Streak
-+3 Shards
-```
-
-### 21.7 Main Round — Failure
-
-Visible:
-
-- Failure banner
-- Failure reason
-- Streak impact
-- Protective effect, if any
-- Continue button
-
-Example:
-
-```text
-FAILED
-3 Heads — Needed 4
-
-Streak reset to x1.0
-```
-
-Protected example:
-
-```text
-FAILED
-3 Heads — Needed 4
-
-Safe Coin softened the loss.
-Streak reduced to x2.5
-```
+- `App` → `GameScreen`
+- `GameScreen` — owns the reducer; routes phases to the right modal/board state.
+- `TopHud` — round / shards / next-shop pips / restart.
+- `ChallengeHeader` — name, description, target/prediction pickers.
+- `Board` — slot row, hints, splash burst, primary button, success banner.
+  - `Slot` (internal)
+  - `CoinIcon` (exported; reused by the bag and shop)
+- `OutcomeBanner` — success-only banner under the board area.
+- `SplashBurst` — particle burst on success.
+- `CoinTray` — bag column + power-ups column.
+- `ChallengePickerModal`, `PowerUpRewardModal`, `CoinShopModal`, `GameOverModal`.
 
 ---
 
-## 22. Component Inventory
+## 17. Layout Proportions
 
-### 22.1 Main Components
+- Single column, max width ~720 px on desktop.
+- Top HUD: thin strip across the top.
+- Challenge header: ~80–120 px tall (varies with target/prediction picker).
+- Board: dominant area, min 520 px wide on desktop, ~240 px tall.
+- Bottom tray: ~160–200 px, two columns (bag wider than power-ups).
 
-```text
-GameScreen
-TopHud
-ChallengeHeader
-Board
-BoardSlot
-CoinTray
-CoinBag
-CoinToken
-PowerUpInventory
-PowerUpSlot
-PrimaryActionButton
-OutcomeBanner
-ChallengePickerModal
-ChallengeCard
-PowerUpRewardModal
-PowerUpCard
-CoinShopModal
-ShopCoinCard
-InspectTooltip
-ReplaceModeOverlay
-```
+On mobile (≤ 720 px wide): tray columns stack to a single column, slot row wraps.
 
 ---
 
-## 23. Component Responsibilities
+## 18. Design North Star
 
-### 23.1 GameScreen
-
-Owns the main layout.
-
-Contains:
-
-- TopHud
-- ChallengeHeader
-- Board
-- BottomTray
-- Modal layer
-
-### 23.2 ChallengeHeader
-
-Displays current challenge.
-
-Props / data:
-
-```ts
-challengeName
-rarity
-description
-requiredSlots
-streakGain
-family
-targetSide?
-```
-
-Should not handle coin placement.
-
-### 23.3 Board
-
-Displays slots and controls coin placement state.
-
-Responsibilities:
-
-- Render numbered slots
-- Show placed coins
-- Show flip states
-- Show result states
-- Show outcome banner region
-- Communicate readiness
-
-### 23.4 CoinBag
-
-Displays available coins.
-
-Responsibilities:
-
-- Show Standard Coin as unlimited
-- Show special coin counts
-- Show valid / invalid / recommended states
-- Allow click-to-place
-
-### 23.5 PowerUpInventory
-
-Displays 3 equipped power-up slots.
-
-Responsibilities:
-
-- Show empty slots
-- Show passive/consumable/charged state
-- Highlight usable powers
-- Handle use or replace mode
-
-### 23.6 ChallengePickerModal
-
-Displays 3 challenge options.
-
-Responsibilities:
-
-- Show challenge cards in 3 columns
-- Allow card selection
-- Close after choice
-
-### 23.7 CoinShopModal
-
-Displays shop inventory.
-
-Responsibilities:
-
-- Show Shards
-- Show 3 shop coin cards
-- Allow purchases
-- Handle full bag replacement
-- Continue to next round
-
----
-
-## 24. Recommended Main Layout Proportions
-
-For a 16:9 desktop layout:
-
-```text
-Top HUD:              8–10% height
-Challenge Header:     14–18% height
-Board Area:           40–45% height
-Bottom Tray:          25–30% height
-```
-
-Approximate:
-
-```text
-┌────────────────────────────┐
-│ Top HUD                    │ 10%
-├────────────────────────────┤
-│ Challenge Header           │ 15%
-├────────────────────────────┤
-│ Board                      │ 45%
-├────────────────────────────┤
-│ Bottom Tray                │ 30%
-└────────────────────────────┘
-```
-
-The board should not be squeezed by the tray.
-
-If space is tight, reduce HUD height before reducing board height.
-
----
-
-## 25. Mobile / Small Screen Considerations
-
-The primary design should target desktop first.
-
-For small screens:
-
-- Board remains central
-- Bottom tray becomes horizontally scrollable
-- Coin Bag and Power-Ups may become tabs
-- Challenge picker remains 3 cards but can become vertical stack
-- Shop cards can scroll horizontally
-
-But the core game feel should not be compromised by designing mobile-first.
-
----
-
-## 26. Example Full Interaction
-
-### Start of Round
-
-Challenge selected:
-
-```text
-Royal Majority
-Get at least 4 Heads in 5 slots.
-Streak Gain: +1.3
-```
-
-Board:
-
-```text
-[ Empty 1 ] [ Empty 2 ] [ Empty 3 ] [ Empty 4 ] [ Empty 5 ]
-```
-
-Tray:
-
-```text
-Coin Bag:
-[ Standard ∞ ] [ Heavy x1 ] [ Crown x1 ] [ Gold x1 ]
-
-Power-Ups:
-[ Shield ] [ Coin Convert ] [ Heads Specialist ]
-```
-
-Player clicks:
-
-```text
-Crown → Gold → Standard → Heavy → Standard
-```
-
-Board becomes:
-
-```text
-[ Crown ] [ Gold ] [ Standard ] [ Heavy ] [ Standard ]
-```
-
-Start button activates.
-
-Player clicks Start.
-
-Coins flip left to right:
-
-```text
-Slot 1: Crown = Heads
-Slot 2: Gold = Tails
-Slot 3: Standard = Heads
-Slot 4: Heavy = Heads
-Slot 5: Standard = Tails
-```
-
-Counting:
-
-```text
-Crown Heads counts as 2 Heads.
-Total Heads = 4.
-```
-
-Outcome:
-
-```text
-SUCCESS
-4 Heads — Challenge Cleared
-+1.3 Streak
-+3 Shards
-```
-
-Then:
-
-```text
-Power-up reward popup opens.
-```
-
----
-
-## 27. Design North Star
-
-The player should never feel like they are filling out a form.
-
-They should feel like they are:
-
-- Choosing a dangerous contract
-- Loading coins into a machine
-- Watching the machine resolve
-- Using relics to bend fate
-- Collecting stronger tools for future rounds
-
-The UI should make the core loop feel physical, dramatic, and fast:
-
-```text
-Pick challenge.
-Load board.
-Flip coins.
-React.
-Collect reward.
-Move on.
-```
+> The board feels like a small machine. You load it, you start it, you read the result. When it pays out, the room lights up. When it doesn't, the run is over and you start a new one.

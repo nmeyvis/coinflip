@@ -13,13 +13,6 @@ export function TopHud({ state, onNewRun }: Props) {
         <div className="hud-label">Round</div>
         <div className="hud-value">{state.round}</div>
       </div>
-      <div className="hud-cell streak-cell">
-        <div className="hud-label">Streak</div>
-        <div className="hud-streak">
-          <span className="streak-x">x</span>
-          <span className="streak-num">{state.streak.toFixed(1)}</span>
-        </div>
-      </div>
       <div className="hud-cell">
         <div className="hud-label">Shards</div>
         <div className="hud-value">

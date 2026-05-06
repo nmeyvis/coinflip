@@ -31,10 +31,6 @@ export function ChallengeHeader({ state, onSetTarget, onSetPrediction, ready }: 
             <span className="stat-label">Slots</span>
             <span className="stat-value">{def.slots}</span>
           </span>
-          <span className="stat">
-            <span className="stat-label">Streak Gain</span>
-            <span className="stat-value">+{def.streakGain.toFixed(1)}</span>
-          </span>
           <span className="stat slot-progress">
             <span className="stat-label">Filled</span>
             <span className="stat-value">{state.placed.length} / {def.slots}</span>

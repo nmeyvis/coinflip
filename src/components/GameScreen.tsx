@@ -198,6 +198,14 @@ function derivePrimary(
       onClick: () => dispatch({ type: 'CONTINUE_FROM_OUTCOME' }),
     };
   }
+  if (state.phase === 'game_over') {
+    return {
+      label: 'Play Again',
+      disabled: false,
+      pulse: true,
+      onClick: () => dispatch({ type: 'NEW_RUN' }),
+    };
+  }
   if (state.phase === 'reward_picker' || state.phase === 'shop') {
     return { label: '…', disabled: true };
   }

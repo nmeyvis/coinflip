@@ -103,7 +103,7 @@ h3 {
 
 .top-hud {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr auto;
   gap: 10px;
   align-items: stretch;
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
@@ -130,27 +130,6 @@ h3 {
   font-size: 24px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-
-.streak-cell {
-  text-align: center;
-  border-left: 1px solid var(--frame);
-  border-right: 1px solid var(--frame);
-}
-.hud-streak {
-  font-size: 36px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  background: linear-gradient(120deg, #fff5d3 10%, var(--gold) 50%, #d97a3a 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 0 32px rgba(245, 196, 81, 0.3);
-}
-.streak-x {
-  font-size: 22px;
-  margin-right: 2px;
-  opacity: 0.9;
 }
 
 .shard-icon {
@@ -341,11 +320,28 @@ h3 {
   background: var(--face-t);
 }
 .face.big {
+  position: relative;
   width: 56px;
   height: 56px;
   font-size: 28px;
   border: 2px solid rgba(0, 0, 0, 0.35);
   box-shadow: inset 0 -3px 10px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.weight-badge {
+  position: absolute;
+  top: -6px;
+  right: -12px;
+  padding: 2px 6px;
+  border-radius: 9px;
+  background: var(--emerald);
+  color: #0a1812;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45), 0 0 10px rgba(76, 213, 148, 0.45);
+  pointer-events: none;
 }
 
 .face.spinning {
@@ -399,6 +395,20 @@ h3 {
 }
 .board.resolved {
   border-color: var(--frame);
+}
+.board.resolved.success {
+  border-color: var(--emerald);
+  box-shadow:
+    0 0 32px rgba(76, 213, 148, 0.25),
+    0 18px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+.board.game-over {
+  border-color: var(--crimson);
+  box-shadow:
+    0 0 32px rgba(232, 90, 90, 0.22),
+    0 18px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .slot-row {
@@ -553,6 +563,34 @@ h3 {
   justify-content: center;
 }
 
+.memory-tag {
+  position: absolute;
+  bottom: -2px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.memory-tag.unused {
+  background: var(--panel-3);
+  color: var(--ink-dim);
+}
+.memory-tag.face-heads {
+  background: var(--face-h);
+  color: #2a1a05;
+}
+.memory-tag.face-tails {
+  background: var(--face-t);
+  color: #1a1d26;
+}
+
 .board-hint {
   color: var(--ink-faint);
   font-size: 13px;
@@ -560,17 +598,61 @@ h3 {
   font-style: italic;
 }
 
+/* ------------------------------------------------------------
+   Success splash burst (emits from board sides on resolve)
+   ------------------------------------------------------------ */
+
+.splash-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 5;
+}
+
+.splash-particle {
+  position: absolute;
+  top: 50%;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: hsl(var(--hue), 90%, 62%);
+  box-shadow:
+    0 0 6px hsl(var(--hue), 95%, 65%),
+    0 0 14px hsla(var(--hue), 95%, 60%, 0.6);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.4);
+  animation: splash-fly var(--dur) cubic-bezier(0.18, 0.72, 0.28, 1) var(--delay) forwards;
+}
+
+@keyframes splash-fly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+      scale(0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-burst { display: none; }
+}
+
 /* Coin tinting per type */
 .coin-heavy .coin-glyph { color: #d8c39a; }
 .coin-switch .coin-glyph { color: #9bc5ff; }
-.coin-gold .coin-glyph { color: var(--gold); }
-.coin-cracked .coin-glyph { color: #d96f50; }
 .coin-crown .coin-glyph { color: #ffd66f; }
 .coin-anchor .coin-glyph { color: #74a4ff; }
 .coin-echo .coin-glyph { color: #b8a4ff; }
 .coin-rebel .coin-glyph { color: #ff97c7; }
 .coin-lucky .coin-glyph { color: #82e8a4; }
-.coin-safe .coin-glyph { color: #cfd6e4; }
 
 /* ------------------------------------------------------------
    Primary action button
@@ -646,17 +728,22 @@ h3 {
   }
 }
 .banner.success {
-  border-color: var(--emerald);
-  box-shadow: 0 0 32px rgba(76, 213, 148, 0.25);
-  background:
-    radial-gradient(ellipse at center, rgba(76, 213, 148, 0.12), transparent 70%),
-    var(--panel-2);
+  border: none;
+  background: none;
+  box-shadow: none;
+  padding: 0;
 }
 .banner.failure {
-  border-color: var(--crimson);
-  box-shadow: 0 0 32px rgba(232, 90, 90, 0.18);
+  border: none;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+.banner.shielded {
+  border-color: var(--azure);
+  box-shadow: 0 0 32px rgba(90, 155, 255, 0.2);
   background:
-    radial-gradient(ellipse at center, rgba(232, 90, 90, 0.1), transparent 70%),
+    radial-gradient(ellipse at center, rgba(90, 155, 255, 0.12), transparent 70%),
     var(--panel-2);
 }
 .banner-title {
@@ -667,6 +754,10 @@ h3 {
 .banner.success .banner-title {
   color: var(--emerald);
   text-shadow: 0 0 18px rgba(76, 213, 148, 0.5);
+}
+.banner.shielded .banner-title {
+  color: var(--azure);
+  text-shadow: 0 0 18px rgba(90, 155, 255, 0.5);
 }
 .banner.failure .banner-title {
   color: var(--crimson);
@@ -973,6 +1064,7 @@ h3 {
   gap: 12px;
 }
 
+
 .ghost-btn {
   padding: 8px 16px;
   background: transparent;
@@ -1271,16 +1363,7 @@ h3 {
 
 @media (max-width: 720px) {
   .top-hud {
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: auto auto;
-  }
-  .streak-cell {
-    grid-column: 1 / -1;
-    border-left: none;
-    border-right: none;
-    border-top: 1px solid var(--frame);
-    border-bottom: 1px solid var(--frame);
-    padding-top: 6px;
+    grid-template-columns: 1fr 1fr 1fr auto;
   }
   .bottom-tray {
     grid-template-columns: 1fr;

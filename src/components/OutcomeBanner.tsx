@@ -1,37 +1,38 @@
 import type { Outcome } from '../game/types';
 
-const protectionLabel: Record<NonNullable<Outcome['protectionApplied']>, string> = {
-  shield: 'Shield prevented streak break.',
-  streak_saver: 'Streak Saver prevented streak break.',
-  safety_net: 'Safety Net halved the streak.',
-  cracked: 'Cracked Coin softened the reset.',
-};
+interface Props {
+  outcome: Outcome;
+  round: number;
+}
 
-export function OutcomeBanner({ outcome }: { outcome: Outcome }) {
-  const cls = outcome.success ? 'banner success' : 'banner failure';
-  return (
-    <div className={cls} role="status">
-      <div className="banner-title">{outcome.success ? 'SUCCESS' : 'FAILED'}</div>
-      <div className="banner-reason">{outcome.reason}</div>
-      {outcome.success ? (
+export function OutcomeBanner({ outcome, round }: Props) {
+  if (outcome.success) {
+    return (
+      <div className="banner success" role="status">
+        <div className="banner-title">SUCCESS</div>
+        <div className="banner-reason">{outcome.reason}</div>
         <div className="banner-rewards">
-          <span>+{outcome.streakGain.toFixed(1)} Streak</span>
-          <span className="dot">•</span>
-          <span>x{outcome.streakBefore.toFixed(1)} → x{outcome.streakAfter.toFixed(1)}</span>
-          <span className="dot">•</span>
           <span>+{outcome.shardsGained} ◆</span>
         </div>
-      ) : (
-        <div className="banner-rewards">
-          <span>x{outcome.streakBefore.toFixed(1)} → x{outcome.streakAfter.toFixed(1)}</span>
-          {outcome.protectionApplied && (
-            <>
-              <span className="dot">•</span>
-              <span>{protectionLabel[outcome.protectionApplied]}</span>
-            </>
-          )}
+      </div>
+    );
+  }
+  if (outcome.shielded) {
+    return (
+      <div className="banner shielded" role="status">
+        <div className="banner-title">SHIELDED</div>
+        <div className="banner-reason">
+          {outcome.reason} — Shield consumed to prevent game over.
         </div>
-      )}
+      </div>
+    );
+  }
+  return (
+    <div className="banner failure" role="status">
+      <div className="banner-title">GAME OVER</div>
+      <div className="banner-reason">
+        {outcome.reason} — You reached round {round}.
+      </div>
     </div>
   );
 }

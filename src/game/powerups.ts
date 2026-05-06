@@ -5,26 +5,10 @@ export const POWERUP_DEFS: Record<PowerUpId, PowerUpDef> = {
   shield: {
     id: 'shield',
     name: 'Shield',
-    rarity: 'common',
+    rarity: 'rare',
     kind: 'consumable',
-    short: 'Block one streak break.',
-    long: 'On failure: prevents your streak from breaking. Consumed on use.',
-  },
-  heads_specialist: {
-    id: 'heads_specialist',
-    name: 'Heads Specialist',
-    rarity: 'common',
-    kind: 'passive',
-    short: '+0.2 streak when Heads dominate.',
-    long: 'Passive. On success, if Heads outnumber Tails (or target is Heads), gain +0.2 extra streak.',
-  },
-  tails_specialist: {
-    id: 'tails_specialist',
-    name: 'Tails Specialist',
-    rarity: 'common',
-    kind: 'passive',
-    short: '+0.2 streak when Tails dominate.',
-    long: 'Passive. On success, if Tails outnumber Heads (or target is Tails), gain +0.2 extra streak.',
+    short: 'Survive one game-ending loss.',
+    long: 'On a failed challenge: instead of ending the run, the Shield is consumed and you continue to the next round (no shards, no reward).',
   },
   coin_convert: {
     id: 'coin_convert',
@@ -51,28 +35,11 @@ export const POWERUP_DEFS: Record<PowerUpId, PowerUpDef> = {
     short: '+1 Shard on every win.',
     long: 'Passive. Each successful challenge awards an extra Shard.',
   },
-  streak_saver: {
-    id: 'streak_saver',
-    name: 'Streak Saver',
-    rarity: 'rare',
-    kind: 'charged',
-    charges: 2,
-    short: 'Block streak break (x2 charges).',
-    long: 'On failure: prevents your streak from breaking. Spends 1 charge.',
-  },
-  safety_net: {
-    id: 'safety_net',
-    name: 'Safety Net',
-    rarity: 'epic',
-    kind: 'passive',
-    short: 'Failure halves streak instead of reset.',
-    long: 'Passive. On failure, your streak is halved instead of fully reset.',
-  },
 };
 
 export const ALL_POWERUP_IDS: PowerUpId[] = Object.keys(POWERUP_DEFS) as PowerUpId[];
 
-/** Power-up reward rarity table (spec 22). Returns weights in [common, uncommon, rare, epic, legendary]. */
+/** Power-up reward rarity table. Returns weights in [common, uncommon, rare, epic, legendary]. */
 export function powerRewardWeights(completedRarity: Rarity): number[] {
   switch (completedRarity) {
     case 'common':
@@ -88,7 +55,7 @@ export function powerRewardWeights(completedRarity: Rarity): number[] {
   }
 }
 
-/** Shop coin rarity table (spec 18). Returns weights for shop visit n (1-indexed). */
+/** Shop coin rarity table. Returns weights for shop visit n (1-indexed). */
 export function shopRarityWeights(visit: number): number[] {
   if (visit <= 1) return [70, 30, 0, 0, 0];
   if (visit === 2) return [45, 40, 15, 0, 0];

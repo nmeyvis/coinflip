@@ -2,6 +2,7 @@ import { CHALLENGE_DEFS } from '../game/challenges';
 import { COIN_DEFS } from '../game/coins';
 import type { CoinId, CoinSide, GameState, PlacedCoin } from '../game/types';
 import { OutcomeBanner } from './OutcomeBanner';
+import { SplashBurst } from './SplashBurst';
 
 interface Props {
   state: GameState;
@@ -18,7 +19,9 @@ export function Board({
   postFlipMode,
   primaryButton,
 }: Props) {
-  const slots = state.activeChallenge ? CHALLENGE_DEFS[state.activeChallenge].slots : 0;
+  const challengeDef = state.activeChallenge ? CHALLENGE_DEFS[state.activeChallenge] : null;
+  const slots = challengeDef?.slots ?? 0;
+  const isMajority = challengeDef?.families.includes('majority') ?? false;
   const showResults =
     state.phase === 'flipping' || state.phase === 'post_flip' || state.phase === 'resolved';
 
@@ -37,6 +40,7 @@ export function Board({
         flipping={isFlippingNow}
         showResults={showResults}
         postFlipMode={postFlipMode}
+        isMajority={isMajority}
         onClick={() => {
           if (state.phase === 'placing' && placed) onRemovePlaced(placed.uid);
           else onSlotClick(i, placed);
@@ -45,7 +49,10 @@ export function Board({
     );
   }
 
-  const showBanner = state.phase === 'resolved' && state.outcome != null;
+  const showBanner =
+    (state.phase === 'resolved' || state.phase === 'game_over') && state.outcome != null;
+  const showSplash = state.phase === 'resolved' && state.outcome?.success === true;
+  const showGameOverBoard = state.phase === 'game_over';
   const placingHint =
     state.phase === 'placing' && state.placed.length === 0
       ? 'Click coins from your bag to fill slots in order.'
@@ -53,8 +60,13 @@ export function Board({
 
   return (
     <section className="board-area">
-      {showBanner && <OutcomeBanner outcome={state.outcome!} />}
-      <div className={`board ${state.phase}`}>
+      {showBanner && <OutcomeBanner outcome={state.outcome!} round={state.round} />}
+      <div
+        className={`board ${state.phase} ${showSplash ? 'success' : ''} ${
+          showGameOverBoard ? 'game-over' : ''
+        }`}
+      >
+        {showSplash && <SplashBurst key={`splash-${state.round}`} />}
         <div className="slot-row">{slotEls}</div>
         {placingHint && <div className="board-hint">{placingHint}</div>}
         {state.phase === 'post_flip' && (
@@ -86,6 +98,7 @@ interface SlotProps {
   flipping: boolean;
   showResults: boolean;
   postFlipMode: 'convert' | 'reroll' | null;
+  isMajority: boolean;
   onClick: () => void;
 }
 
@@ -97,12 +110,18 @@ function Slot({
   flipping,
   showResults,
   postFlipMode,
+  isMajority,
   onClick,
 }: SlotProps) {
   const empty = placed == null;
   const def = placed ? COIN_DEFS[placed.coinId] : null;
   const result = placed?.result;
   const showFace = showResults && revealed && result != null;
+  const showWeightBadge =
+    showFace &&
+    isMajority &&
+    ((placed?.coinId === 'crown' && result === 'H') ||
+      (placed?.coinId === 'anchor' && result === 'T'));
 
   let stateClass = '';
   if (empty) stateClass = 'empty';
@@ -138,6 +157,7 @@ function Slot({
           {showFace ? (
             <span className={`face big face-${result === 'H' ? 'heads' : 'tails'}`}>
               {result}
+              {showWeightBadge && <span className="weight-badge" title="Counts as 2 in Majority">×2</span>}
             </span>
           ) : flipping ? (
             <span className="face big spinning">?</span>
@@ -154,27 +174,35 @@ function Slot({
 export function CoinIcon({
   coinId,
   declared,
+  memoryBadge,
 }: {
   coinId: CoinId;
   declared?: CoinSide;
+  memoryBadge?: CoinSide | '?';
 }) {
   const map: Record<CoinId, string> = {
     standard: '◯',
     heavy: '⬢',
     switch: '⇄',
-    gold: '★',
-    cracked: '✦',
     crown: '♛',
     anchor: '⚓',
     echo: '◐',
     rebel: '◑',
     lucky: '✧',
-    safe: '⛨',
   };
+  const memoryClass =
+    memoryBadge === '?'
+      ? 'unused'
+      : memoryBadge === 'H'
+      ? 'face-heads'
+      : memoryBadge === 'T'
+      ? 'face-tails'
+      : '';
   return (
     <span className="coin-glyph">
       {map[coinId]}
       {declared && <span className="declared-tag">{declared}</span>}
+      {memoryBadge && <span className={`memory-tag ${memoryClass}`}>{memoryBadge}</span>}
     </span>
   );
 }

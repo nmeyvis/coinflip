@@ -1,6 +1,5 @@
 import {
   CHALLENGE_DEFS,
-  countSide,
   evaluateChallenge,
   offerRaritiesForRound,
   shardsForChallenge,
@@ -76,7 +75,6 @@ export function newRun(): GameState {
   return {
     phase: 'challenge_picker',
     round: 1,
-    streak: 1.0,
     shards: 0,
     bag: [],
     powerUps: [null, null, null],
@@ -467,91 +465,46 @@ function resolveOutcome(state: GameState): GameState {
   if (!def) return state;
   const evalRes = evaluateChallenge(def.id, state.placed, state.target, state.prediction);
 
-  // Tally coin / power-up presence
-  const goldCount = state.placed.filter((p) => p.coinId === 'gold').length;
-  const crackedCount = state.placed.filter((p) => p.coinId === 'cracked').length;
-  const safeCount = state.placed.filter((p) => p.coinId === 'safe').length;
-  const headsSpec = state.powerUps.findIndex((p) => p?.id === 'heads_specialist');
-  const tailsSpec = state.powerUps.findIndex((p) => p?.id === 'tails_specialist');
-  const luckyCharm = state.powerUps.findIndex((p) => p?.id === 'lucky_charm');
-  const safetyNet = state.powerUps.findIndex((p) => p?.id === 'safety_net');
-  const shieldIdx = state.powerUps.findIndex((p) => p?.id === 'shield');
-  const streakSaverIdx = state.powerUps.findIndex((p) => p?.id === 'streak_saver');
-
-  let outcome: Outcome;
-  let nextPowerUps = state.powerUps.slice();
-  let nextStreak = state.streak;
-  let shardsGained = 0;
-
-  if (evalRes.success) {
-    let gain = def.streakGain + 0.2 * goldCount + 0.4 * crackedCount;
-    const heads = countSide(state.placed, 'H');
-    const tails = countSide(state.placed, 'T');
-    const headsDominant = state.target === 'H' || (state.target == null && heads > tails);
-    const tailsDominant = state.target === 'T' || (state.target == null && tails > heads);
-    if (headsSpec >= 0 && headsDominant) gain += 0.2;
-    if (tailsSpec >= 0 && tailsDominant) gain += 0.2;
-
-    nextStreak = Math.round((state.streak + gain) * 100) / 100;
-    shardsGained = shardsForChallenge(def.rarity) + (luckyCharm >= 0 ? 1 : 0);
-
-    outcome = {
-      success: true,
-      reason: evalRes.reason,
-      streakBefore: state.streak,
-      streakAfter: nextStreak,
-      streakGain: Math.round(gain * 100) / 100,
-      shardsGained,
-      headsCount: evalRes.headsCount,
-      tailsCount: evalRes.tailsCount,
-    };
-  } else {
-    // Failure protection priority:
-    // 1. Shield (consume) - prevents reset entirely
-    // 2. Streak Saver (charge) - prevents reset entirely
-    // 3. Safe Coin or Safety Net - halve current
-    // 4. Cracked Coin - reset to 0.5
-    // 5. Default - reset to 1.0
-    let protectionApplied: Outcome['protectionApplied'] | undefined = undefined;
-
-    if (shieldIdx >= 0 && state.streak > 1.0) {
+  if (!evalRes.success) {
+    const shieldIdx = state.powerUps.findIndex((p) => p?.id === 'shield');
+    if (shieldIdx >= 0) {
+      const nextPowerUps = state.powerUps.slice();
       nextPowerUps[shieldIdx] = null;
-      nextStreak = state.streak;
-      protectionApplied = 'shield';
-    } else if (streakSaverIdx >= 0 && state.streak > 1.0) {
-      const charges = (nextPowerUps[streakSaverIdx]?.charges ?? 1) - 1;
-      nextPowerUps[streakSaverIdx] = charges > 0 ? { id: 'streak_saver', charges } : null;
-      nextStreak = state.streak;
-      protectionApplied = 'streak_saver';
-    } else if (safeCount > 0 || safetyNet >= 0) {
-      nextStreak = Math.max(0.5, Math.round(state.streak * 0.5 * 100) / 100);
-      protectionApplied = safeCount > 0 ? undefined : 'safety_net';
-    } else if (crackedCount > 0) {
-      nextStreak = 0.5;
-      protectionApplied = 'cracked';
-    } else {
-      nextStreak = 1.0;
+      const outcome: Outcome = {
+        success: false,
+        reason: evalRes.reason,
+        shardsGained: 0,
+        headsCount: evalRes.headsCount,
+        tailsCount: evalRes.tailsCount,
+        shielded: true,
+      };
+      return { ...state, phase: 'resolved', powerUps: nextPowerUps, outcome };
     }
-
-    outcome = {
+    const outcome: Outcome = {
       success: false,
       reason: evalRes.reason,
-      streakBefore: state.streak,
-      streakAfter: nextStreak,
-      streakGain: 0,
       shardsGained: 0,
-      protectionApplied,
       headsCount: evalRes.headsCount,
       tailsCount: evalRes.tailsCount,
     };
+    return { ...state, phase: 'game_over', outcome };
   }
+
+  const luckyCharm = state.powerUps.findIndex((p) => p?.id === 'lucky_charm');
+  const shardsGained = shardsForChallenge(def.rarity) + (luckyCharm >= 0 ? 1 : 0);
+
+  const outcome: Outcome = {
+    success: true,
+    reason: evalRes.reason,
+    shardsGained,
+    headsCount: evalRes.headsCount,
+    tailsCount: evalRes.tailsCount,
+  };
 
   return {
     ...state,
     phase: 'resolved',
-    streak: nextStreak,
     shards: state.shards + shardsGained,
-    powerUps: nextPowerUps,
     outcome,
   };
 }
@@ -564,7 +517,7 @@ function advanceFromResolved(state: GameState): GameState {
     const offers = generateRewardOffers(def.rarity);
     return { ...state, phase: 'reward_picker', rewardOffers: offers };
   }
-  // Failure: skip reward, possibly enter shop, then start next round.
+  // Shielded failure: skip reward, possibly visit shop, then next round.
   return maybeShopOrNext(state);
 }
 

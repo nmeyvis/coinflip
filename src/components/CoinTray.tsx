@@ -6,7 +6,7 @@ import {
   isCoinValid,
 } from '../game/engine';
 import { POWERUP_DEFS } from '../game/powerups';
-import type { CoinId, GameState, PowerUpInstance, SpecialCoinId } from '../game/types';
+import type { CoinId, CoinSide, GameState, PowerUpInstance, SpecialCoinId } from '../game/types';
 import { CoinIcon } from './Board';
 
 interface Props {
@@ -47,6 +47,7 @@ export function CoinTray({ state, onPlaceCoin, onPowerUpClick }: Props) {
                 recommended={state.activeChallenge ? isCoinRecommended(state, id) : false}
                 valid={state.activeChallenge ? isCoinValid(state, id) : true}
                 disabled={!canPlace(id) || avail <= 0}
+                memoryBadge={memoryBadgeFor(id, state.coinMemory)}
                 onClick={() => onPlaceCoin(id)}
               />
             );
@@ -74,6 +75,14 @@ export function CoinTray({ state, onPlaceCoin, onPowerUpClick }: Props) {
   );
 }
 
+function memoryBadgeFor(
+  id: CoinId,
+  memory: GameState['coinMemory'],
+): CoinSide | '?' | undefined {
+  if (id !== 'heavy' && id !== 'switch') return undefined;
+  return memory[id] ?? '?';
+}
+
 function uniqueSpecials(bag: SpecialCoinId[]): { id: SpecialCoinId; count: number }[] {
   const counts = new Map<SpecialCoinId, number>();
   for (const id of bag) counts.set(id, (counts.get(id) ?? 0) + 1);
@@ -91,6 +100,7 @@ interface ChipProps {
   recommended: boolean;
   valid: boolean;
   disabled: boolean;
+  memoryBadge?: CoinSide | '?';
   onClick: () => void;
 }
 
@@ -101,6 +111,7 @@ function CoinChip({
   recommended,
   valid,
   disabled,
+  memoryBadge,
   onClick,
 }: ChipProps) {
   const def = COIN_DEFS[coinId];
@@ -123,7 +134,7 @@ function CoinChip({
       disabled={disabled}
       title={`${def.name}\n${def.long}`}
     >
-      <CoinIcon coinId={coinId} />
+      <CoinIcon coinId={coinId} memoryBadge={memoryBadge} />
       <div className="coin-meta">
         <div className="coin-name">{def.name}</div>
         <div className="coin-short">{def.short}</div>
@@ -183,22 +194,14 @@ function PowerSlot({ slot, slotIdx, state, onClick }: PowerSlotProps) {
 
 function powerIcon(id: PowerUpInstance['id']): string {
   switch (id) {
-    case 'shield':
-      return '⛨';
     case 'coin_convert':
       return '⇋';
     case 'reroll_charm':
       return '↻';
-    case 'heads_specialist':
-      return 'H';
-    case 'tails_specialist':
-      return 'T';
     case 'lucky_charm':
       return '☘';
-    case 'streak_saver':
-      return '◈';
-    case 'safety_net':
-      return '⌇';
+    case 'shield':
+      return '⛨';
   }
 }
 

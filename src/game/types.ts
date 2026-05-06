@@ -5,26 +5,20 @@ export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type SpecialCoinId =
   | 'heavy'
   | 'switch'
-  | 'gold'
-  | 'cracked'
   | 'crown'
   | 'anchor'
   | 'echo'
   | 'rebel'
-  | 'lucky'
-  | 'safe';
+  | 'lucky';
 
 export type CoinId = 'standard' | SpecialCoinId;
 
 export type CoinFamily =
   | 'match'
-  | 'streak'
+  | 'chain'
   | 'pattern'
   | 'majority'
   | 'prediction'
-  | 'greed'
-  | 'safety'
-  | 'risk'
   | 'adjacency';
 
 export interface CoinDef {
@@ -42,7 +36,7 @@ export type ChallengeFamily =
   | 'match'
   | 'majority'
   | 'prediction'
-  | 'streak'
+  | 'chain'
   | 'pattern'
   | 'risk';
 
@@ -74,7 +68,6 @@ export interface ChallengeDef {
   families: ChallengeFamily[];
   description: string;
   slots: number;
-  streakGain: number;
   /** Player must pick a target side (Majority-style). */
   needsTarget: boolean;
   /** Player must enter a prediction sequence of length = slots. */
@@ -98,12 +91,8 @@ export interface PlacedCoin {
 export type PowerUpId =
   | 'coin_convert'
   | 'reroll_charm'
-  | 'shield'
-  | 'streak_saver'
-  | 'heads_specialist'
-  | 'tails_specialist'
   | 'lucky_charm'
-  | 'safety_net';
+  | 'shield';
 
 export type PowerUpKind = 'consumable' | 'charged' | 'passive';
 
@@ -138,13 +127,11 @@ export type PostFlipMode = null | 'convert' | 'reroll';
 export interface Outcome {
   success: boolean;
   reason: string;
-  streakBefore: number;
-  streakAfter: number;
-  streakGain: number;
   shardsGained: number;
-  protectionApplied?: 'shield' | 'streak_saver' | 'safety_net' | 'cracked';
   headsCount: number;
   tailsCount: number;
+  /** Set when a Shield was consumed to prevent game over on a failed challenge. */
+  shielded?: boolean;
 }
 
 export interface ShopOffer {
@@ -155,8 +142,6 @@ export interface ShopOffer {
 export interface GameState {
   phase: Phase;
   round: number;
-  /** Current streak multiplier (e.g. 1.0, 2.6). */
-  streak: number;
   shards: number;
 
   /** Owned special coins (multiset). */

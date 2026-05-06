@@ -1,4 +1,4 @@
-import { CHALLENGE_DEFS } from '../game/challenges';
+import { CHALLENGE_DEFS, shardsForChallenge } from '../game/challenges';
 import type { ChallengeId } from '../game/types';
 import { RarityBadge } from './Rarity';
 
@@ -33,8 +33,11 @@ export function ChallengePickerModal({ offers, onChoose }: Props) {
                     <span className="stat-value">{def.slots}</span>
                   </span>
                   <span>
-                    <span className="stat-label">Streak</span>
-                    <span className="stat-value">+{def.streakGain.toFixed(1)}</span>
+                    <span className="stat-label">Reward</span>
+                    <span className="stat-value">
+                      <span className="shard-icon">◆</span>
+                      {shardsForChallenge(def.rarity)}
+                    </span>
                   </span>
                 </div>
                 {def.rerollDisabled && (

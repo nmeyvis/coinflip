@@ -14,7 +14,7 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     id: 'heavy',
     name: 'Heavy Coin',
     rarity: 'common',
-    families: ['match', 'streak'],
+    families: ['match', 'chain'],
     short: '65% to repeat itself.',
     long: 'First flip in a run is 50/50. After that, 65% to repeat its own previous result.',
     price: 2,
@@ -27,24 +27,6 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     short: '65% to flip its own last result.',
     long: 'First flip in a run is 50/50. After that, 65% to land opposite of its own previous result.',
     price: 2,
-  },
-  gold: {
-    id: 'gold',
-    name: 'Gold Coin',
-    rarity: 'uncommon',
-    families: ['greed'],
-    short: 'On success: +0.2 streak.',
-    long: '50/50 flip. If the challenge succeeds while this coin was used, gain +0.2 additional streak.',
-    price: 3,
-  },
-  cracked: {
-    id: 'cracked',
-    name: 'Cracked Coin',
-    rarity: 'uncommon',
-    families: ['greed', 'risk'],
-    short: '+0.4 on win, x0.5 reset on loss.',
-    long: '50/50 flip. Success: +0.4 streak. Failure: streak resets to x0.5 instead of x1.0.',
-    price: 3,
   },
   crown: {
     id: 'crown',
@@ -91,15 +73,6 @@ export const COIN_DEFS: Record<CoinId, CoinDef> = {
     long: 'Declares a side based on the challenge target (Heads if no target). 65% to land on that side.',
     price: 5,
   },
-  safe: {
-    id: 'safe',
-    name: 'Safe Coin',
-    rarity: 'epic',
-    families: ['safety'],
-    short: 'Failure halves streak instead of reset.',
-    long: '50/50 flip. If challenge fails while this coin was used, streak is halved instead of fully reset.',
-    price: 8,
-  },
 };
 
 export const ALL_COIN_IDS: CoinId[] = Object.keys(COIN_DEFS) as CoinId[];
@@ -122,9 +95,6 @@ export function flipCoin(
   const id = placed.coinId;
   switch (id) {
     case 'standard':
-    case 'gold':
-    case 'cracked':
-    case 'safe':
       return flipFair();
     case 'crown':
       return biased(0.6);
